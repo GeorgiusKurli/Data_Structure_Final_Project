@@ -321,59 +321,6 @@ void Compress(string filedir, string filesavedas){
 	
 	//Generating code from the huffman tree
 	generate_code(left->huffman_node, "");
-	//Removing last delimeter
-	huffman_code.pop_back();
-	huffman_code.pop_back();
-	huffman_code.pop_back();
-	
-	
-	//Creating an array of string to store the code
-	string huffman_code_array[letter_count];
-	
-	//integer to be used to store maximum length of a code
-	int max_code_length = 0;
-	
-	//Copy used to split code into array.
-	string huffman_code_copy = huffman_code;
-	
-	
-	//Position used to store where the split will occur
-	int position;
-	
-	//Storing tokens into array
-	for(int x = 0; x < letter_count; x++){
-		if(x < letter_count - 1){
-			position = huffman_code_copy.find("___");
-		
-			huffman_code_array[x] = huffman_code_copy.substr(0,huffman_code_copy.find("___"));
-			huffman_code_copy.erase(0, position + 3);
-			
-			//Comparing length of string to get max length
-			if(huffman_code_array[x].length() > max_code_length){
-				max_code_length = huffman_code_array[x].length();
-			}
-		}
-		else{
-			huffman_code_array[x] = huffman_code_copy;
-			if(huffman_code_array[x].length() > max_code_length){
-				max_code_length = huffman_code_array[x].length();
-			}
-		}
-	}
-	
-	//Clearing old huffman code
-	huffman_code = "";
-	
-	// Adding 0 to code below max length
-	for(int x = 0; x < letter_count; x++){
-		
-		if(huffman_code_array[x].length() < max_code_length){
-			string zeroes_to_be_added((max_code_length - huffman_code_array[x].length()), '0');
-			huffman_code_array[x] = huffman_code_array[x] + zeroes_to_be_added;
-		}
-		huffman_code += huffman_code_array[x] + "___";
-	}
-	huffman_code = Trim(huffman_code);
 	
 	cout << "LOG: Huffman completed" << endl;
 
@@ -387,16 +334,10 @@ void Compress(string filedir, string filesavedas){
 	
 	int index;
 	
-	//Writing the code, letter count and code length into a file
-	file_code_writer << max_code_length << " " << all_letter_count << " ";
+	//Writing the code, letter count and unique letter count into a file
+	file_code_writer << all_letter_count << " " << letter_count << " ";
 	file_code_writer.flush();
-	for(int x = 0; x < letter_count; x++){
-		index = x * (max_code_length+3);
-		file_code_writer << huffman_code.substr(index, max_code_length +3) ;
-		file_code_writer.flush();
-		
-
-	}
+	file_code_writer << huffman_code;
 	file_code_writer.close();
 	
 	cout << "LOG: Code file written successfully" << endl;
@@ -413,11 +354,26 @@ void Compress(string filedir, string filesavedas){
 	//Used to get number of binary created
 	float binary_count = 0;
 	
+	string temp_char;
+	
+	int iterator;
+	
 	if(filereader.is_open()){
 		
 		for(int x = 0; x < all_letter_count; x++){
 			current_char = filereader.get();
-			temp_code = huffman_code.substr(huffman_code.find(current_char) + 1, max_code_length - 1);
+			
+			iterator = 1;
+			temp_char = huffman_code.substr(huffman_code.find(current_char) + iterator, 1);
+			temp_code = "";
+			
+			while(temp_char != "_"){
+				
+				temp_code += temp_char;
+				iterator += 1;
+				temp_char = huffman_code.substr(huffman_code.find(current_char) + iterator, 1);
+			}
+						
 			for(int i = 0; i < temp_code.length(); i++){
 				
 				if(string(1, temp_code[i]) == zero){
@@ -432,6 +388,7 @@ void Compress(string filedir, string filesavedas){
 		}
 	}
 	
+	file_compressed_writer << "END" << endl;
 	cout << "LOG: Main file written successfully" << endl;
 
 	filereader.close();
@@ -451,19 +408,20 @@ void Decompress(string filedir, string filecode, string filesavedas){
 	
 	string huffman_code = "";
 	string current;
-	int max_code_length, all_letter_count;
+	int all_letter_count;
+	int letter_count;
 	
 	code_filereader.open(filecode);
 	
 	if(code_filereader.is_open()){
 		
-		//Get max length of code
+		//Get total character count
 		current = code_filereader.get();
 		while((current) != " "){
 				huffman_code += current;
 				current = code_filereader.get();
 		}
-		max_code_length = stoi(huffman_code);
+		all_letter_count = stoi(huffman_code);
 		huffman_code = "";
 		
 		current = code_filereader.get();
@@ -471,7 +429,7 @@ void Decompress(string filedir, string filecode, string filesavedas){
 				huffman_code += current;
 				current = code_filereader.get();
 		}
-		all_letter_count = stoi(huffman_code);
+		letter_count = stoi(huffman_code);
 		huffman_code = "";
 		
 		while(code_filereader.good()){
@@ -484,21 +442,69 @@ void Decompress(string filedir, string filecode, string filesavedas){
 	
 	code_filereader.close();
 	
+	string huffman_code_array[letter_count];
+	
+	int iterator = 0;
+	char delimiter = '_';
+	
+	//Splitting huffman code into array
+	for(int x = 0; x < letter_count; x++){
+		while(huffman_code[iterator] != delimiter){
+			current += huffman_code[iterator];
+			iterator += 1;
+		}
+		iterator += 3;
+		huffman_code_array[x] = current;
+		current = "";
+	}
+	
+	huffman_code_array[0] = huffman_code_array[0].substr(1);
+	int position;
 	
 	main_filereader.open(filedir);
 	filewriter.open(filesavedas);
+	
+	//Used to store current letter codes
 	string current_code = "";
+	
+	//Bool used to check if code is found	
+	bool found;
+		
 	if(main_filereader.is_open()){
+		
+		//Loop for each letter
 		for(int i = 0; i < all_letter_count; i++){
 			
-			current_code = "";
-			for(int x = 0; x < max_code_length - 1; x++){
-				current_code += main_filereader.get();
+			found = false;
+			current_code = main_filereader.get();
+			
+			while(!found){
+				iterator = 0;
+				while(iterator < letter_count){
+					if(huffman_code_array[iterator].substr(1, -1) == current_code){
+						iterator = letter_count+1;
+					}
+					else{
+						iterator += 1;
+					}
+				}
+				
+				if(iterator == letter_count){
+					current_code += main_filereader.get();
+				}
+				else{
+					found = true;
+				}
+
 			}
-			if((huffman_code.find(current_code)-1) < huffman_code.length()){
-				filewriter << huffman_code.substr(huffman_code.find(current_code)-1, 1);
-				filewriter.flush();
+			
+			for(int x = 0; x < letter_count; x++){
+				if(huffman_code_array[x].substr(1, -1) == current_code){
+					filewriter << huffman_code_array[x].substr(0,1);
+					filewriter.flush();
+				}
 			}
+			
 			
 		}
 	}
