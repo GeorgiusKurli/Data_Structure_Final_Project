@@ -253,7 +253,7 @@ void Compress(string filedir, string filesavedas){
 			}
 		}
 	}
-	cout << "LOG: hashing completed" << endl;
+	cout << "LOG: Hashing completed" << endl;
 	filereader.close();
 	
 	Node* head = initialize_queue("",0);
@@ -385,14 +385,22 @@ void Compress(string filedir, string filesavedas){
 	filereader.open(filedir);
 	file_code_writer.open(filedir+"_code.txt");
 	
+	int index;
+	
 	//Writing the code, letter count and code length into a file
 	file_code_writer << max_code_length << " " << all_letter_count << " ";
 	file_code_writer.flush();
 	for(int x = 0; x < letter_count; x++){
-		file_code_writer << huffman_code.substr(x * (max_code_length+5), max_code_length +5) ;
+		index = x * (max_code_length+3);
+		file_code_writer << huffman_code.substr(index, max_code_length +3) ;
 		file_code_writer.flush();
+		
+
 	}
 	file_code_writer.close();
+	
+	cout << "LOG: Code file written successfully" << endl;
+
 	
 	file_compressed_writer.open(filesavedas);
 	
@@ -424,6 +432,7 @@ void Compress(string filedir, string filesavedas){
 		}
 	}
 	
+	cout << "LOG: Main file written successfully" << endl;
 
 	filereader.close();
 	file_compressed_writer.close();
@@ -471,7 +480,7 @@ void Decompress(string filedir, string filecode, string filesavedas){
 		
 	}
 	huffman_code.pop_back();
-	cout << "LOG: code file read." << endl;
+	cout << "LOG: Code file read." << endl;
 	
 	code_filereader.close();
 	
@@ -496,10 +505,17 @@ void Decompress(string filedir, string filecode, string filesavedas){
 	
 	main_filereader.close();
 	filewriter.close();
+	
+	cout << "LOG: Output file successfully created." << endl;
+
 };
 
 int main(){
 	Compress("test.txt", "test_compressed.txt");
 	
 	Decompress("test_compressed.txt", "test.txt_code.txt", "test_output.txt");
+	
+//	Compress("mobydick.txt", "mobydick_compressed.txt");
+//	
+//	Decompress("mobydick_compressed.txt", "mobydick.txt_code.txt", "mobydick_output.txt");
 }
