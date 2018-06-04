@@ -367,8 +367,6 @@ void Compress(string filedir, string filesavedas){
 			}
 		}
 	}
-	
-	file_compressed_writer << "END" << endl;
 	cout << "LOG: Main file written successfully" << endl;
 
 	filereader.close();
