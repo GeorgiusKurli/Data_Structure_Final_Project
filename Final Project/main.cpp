@@ -79,28 +79,6 @@ void insert_node(Node* head, string letter, int frequency){
 }
 
 
-// Used for inserting a node into the priority queue
-void insert_node(Node* head, Node* node){
-	Node* current = head;
-	int frequency = node->frequency;
-	
-	while(current->next != NULL && frequency > current->next->frequency)
-	{
-		current = current->next;		
-	}
-	
-	if(current->next == NULL){
-		node->next = NULL;
-		current->next = node;
-	}
-	else{
-		node->next = current->next;
-		current->next = node;
-	}
-	
-}
-
-
 // Used for inserting a huffman node into the priority queue
 void insert_node(Node* head, Huffman_Node* node){
 	Node* current = head;
@@ -272,7 +250,7 @@ void Compress(string filedir, string filesavedas){
 	
 	Huffman_Node *huffman_node, *leaf_left, *leaf_right;
 	
-	//removing something?
+	//removing end of file char
 	pop(head);
 	letter_count -= 1;
 
@@ -280,6 +258,8 @@ void Compress(string filedir, string filesavedas){
 		
 		//Popping two nodes from queue
 		left = pop(head);
+		
+		//check if pop(head) is still executable
 		if(right = pop(head)){
 			
 			
@@ -461,6 +441,8 @@ void Decompress(string filedir, string filecode, string filesavedas){
 	huffman_code_array[0] = huffman_code_array[0].substr(1);
 	int position;
 	
+	cout << "LOG: Huffman code reconstructed" << endl;
+	
 	main_filereader.open(filedir);
 	filewriter.open(filesavedas);
 	
@@ -476,6 +458,9 @@ void Decompress(string filedir, string filecode, string filesavedas){
 		for(int i = 0; i < all_letter_count; i++){
 			
 			found = false;
+			if(!main_filereader.good()){
+				break;
+			}
 			current_code = main_filereader.get();
 			
 			while(!found){
@@ -517,11 +502,13 @@ void Decompress(string filedir, string filecode, string filesavedas){
 };
 
 int main(){
-	Compress("test.txt", "test_compressed.txt");
+	string dir;
 	
-	Decompress("test_compressed.txt", "test.txt_code.txt", "test_output.txt");
 	
-//	Compress("mobydick.txt", "mobydick_compressed.txt");
-//	
-//	Decompress("mobydick_compressed.txt", "mobydick.txt_code.txt", "mobydick_output.txt");
+	cout << "Input file directory" << endl;
+	cin >> dir;
+	
+	Compress(dir + ".txt", dir + "_compressed.txt");
+	
+	Decompress(dir + "_compressed.txt",dir +  ".txt_code.txt", dir + "_output.txt");
 }
